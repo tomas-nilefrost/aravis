@@ -291,6 +291,65 @@ indexed_test (void)
 }
 
 static void
+selected_register_test (void)
+{
+	ArvDevice *device;
+	ArvGc *genicam;
+	ArvGcNode *node;
+	ArvGcNode *selector;
+	GError *error = NULL;
+	unsigned i;
+
+	device = arv_fake_device_new ("TEST0", &error);
+	g_assert (ARV_IS_FAKE_DEVICE (device));
+	g_assert (error == NULL);
+
+	arv_device_set_register_cache_policy (device, ARV_REGISTER_CACHE_POLICY_ENABLE);
+
+	genicam = arv_device_get_genicam (device);
+	g_assert (ARV_IS_GC (genicam));
+
+	node = arv_gc_get_node (genicam, "SelectedRegister");
+	g_assert (ARV_IS_GC_INTEGER (node));
+
+	selector = arv_gc_get_node (genicam, "RegisterSelector");
+	g_assert (ARV_IS_GC_INTEGER (selector));
+
+	g_assert (arv_gc_selector_is_selector (ARV_GC_SELECTOR (selector)));
+
+	for (i = 0; i < 4; i++) {
+		guint8 value[4] = { 0x10 + i, 0, 0, 0 };
+
+		arv_device_write_memory (device, 0x3000 + 4 * i, sizeof (value), value, &error);
+		g_assert (error == NULL);
+	}
+
+	for (i = 0; i < 4; i++) {
+		gint64 v_int64;
+
+		arv_gc_integer_set_value (ARV_GC_INTEGER (selector), i, &error);
+		g_assert (error == NULL);
+
+		v_int64 = arv_gc_integer_get_value (ARV_GC_INTEGER (node), &error);
+		g_assert (error == NULL);
+		g_assert_cmpint (v_int64, ==, 0x10 + i);
+	}
+
+	for (i = 4; i > 0; i--) {
+		gint64 v_int64;
+
+		arv_gc_integer_set_value (ARV_GC_INTEGER (selector), i - 1, &error);
+		g_assert (error == NULL);
+
+		v_int64 = arv_gc_integer_get_value (ARV_GC_INTEGER (node), &error);
+		g_assert (error == NULL);
+		g_assert_cmpint (v_int64, ==, 0x10 + i - 1);
+	}
+
+	g_object_unref (device);
+}
+
+static void
 boolean_test (void)
 {
 	ArvDevice *device;
@@ -1439,6 +1498,7 @@ main (int argc, char *argv[])
 	g_test_add_func ("/genicam/swissknife", swiss_knife_test);
 	g_test_add_func ("/genicam/converter", converter_test);
 	g_test_add_func ("/genicam/register", register_test);
+	g_test_add_func ("/genicam/selected-register", selected_register_test);
 	g_test_add_func ("/genicam/string", string_test);
 	g_test_add_func ("/genicam/url", url_test);
 	g_test_add_func ("/genicam/mandatory", mandatory_test);

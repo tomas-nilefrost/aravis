@@ -613,6 +613,28 @@
     <ImposedAccessMode>RO</ImposedAccessMode>
   </Integer>
 
+  <IntReg Name="SelectedRegister">
+    <Address>0x3000</Address>
+    <pAddress>SelectedRegisterOffset</pAddress>
+    <Length>4</Length>
+    <AccessMode>RW</AccessMode>
+    <pPort>Device</pPort>
+    <Sign>Unsigned</Sign>
+    <Endianess>LittleEndian</Endianess>
+  </IntReg>
+
+  <IntSwissKnife Name="SelectedRegisterOffset">
+    <pVariable Name="SEL">RegisterSelector</pVariable>
+    <Formula>SEL * 4</Formula>
+  </IntSwissKnife>
+
+  <Integer Name="RegisterSelector">
+    <Value>0</Value>
+    <Min>0</Min>
+    <Max>3</Max>
+    <pSelected>SelectedRegister</pSelected>
+  </Integer>
+
   <IntReg Name="RWRegister">
     <Address>0x1100</Address>
     <Length>4</Length>
